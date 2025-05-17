@@ -1,16 +1,19 @@
-
-
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 import os
+from typing import Set, Optional
 
 def get_links(url):
-    '''
+    """
     Отправляет GET-запрос на указанный URL.
     Парсит страницу с помощью BeautifulSoup для поиска всех тегов <a>.
     Собирает уникальные ссылки, которые ведут на другие сайты.
-    '''
+    
+    :param url: URL-адрес для парсинга
+    :return: Множество уникальных внешних ссылок
+    """
+ 
     try:
         response = requests.get(url, timeout=5)  # Установим таймаут
         response.raise_for_status()  # Проверяем на ошибки
@@ -35,16 +38,21 @@ def get_links(url):
     return links
 
 def parse_links(start_url, depth, output_file=None):
-    '''
+    """
     Использует множество для отслеживания посещённых ссылок и очередь для обработки ссылок, которые нужно посетить.
     Повторяет процесс для каждой полученной ссылки до заданной глубины.
-    '''
+    
+    :param start_url: URL-адрес, с которого начинается парсинг
+    :param depth: Глубина парсинга
+    :param output_file: Имя файла для сохранения результата (если требуется)
+    :return: Множество посещённых ссылок
+    """
     if depth == 0:
         print(f"Глубина парсинга равна 0. Возвращаем только начальный URL: {start_url}")
         return {start_url}
 
-    visited = set()
-    to_visit = {start_url}
+    visited: Set[str] = set()
+    to_visit: Set[str] = {start_url}
     current_depth = 0
 
     while to_visit and current_depth < depth:
@@ -69,8 +77,10 @@ def parse_links(start_url, depth, output_file=None):
                 for link in links:
                     f.write(link + '\n')
 
-        current_depth += 1
-
+        # Увеличиваем глубину только после обработки всех текущих ссылок
+        if not to_visit:
+            current_depth += 1
+   
     return visited
 
 if __name__ == "__main__":  # Правильная проверка имени модуля
